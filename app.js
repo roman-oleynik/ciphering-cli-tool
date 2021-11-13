@@ -1,10 +1,12 @@
 const { pipeline } = require('stream');
 const fs = require('fs');
 
-const { input, output } = require("./options");
+const { input, output, action } = require("./options");
 const TextShifter = require('./streams');
 
-
+console.log(input);
+console.log(output);
+console.log(action);
 pipeline(
     input ? fs.createReadStream(input) : process.stdin,
     new TextShifter(),
