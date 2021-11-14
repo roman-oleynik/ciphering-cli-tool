@@ -1,12 +1,4 @@
-const { Command } = require('commander');
 const abort = require('./utils');
-const program = new Command();
-const {
-    validateAction,
-    validateInputPath,
-    validateOutputPath,
-    validateShiftNum
-} = require('./validators');
 
 const config = {
     requiredOptions: [
