@@ -1,11 +1,23 @@
 const { Transform } = require('stream');
-const { shift, action } = require("./options");
+// const { shift, action } = require("./options");
 const abort = require('./utils');
 
-class TextShifter extends Transform {
+class CaesarCipher extends Transform {
+    constructor(config) {
+        super();
+        this.config = config;
+    }
     _transform(chunk, encoding, callback) {
         try {
-            const resultString = this.make(chunk.toString('utf8'), Number(shift), action);
+            let resultString = chunk;
+
+            if (this.config[1] === "1") {
+                resultString = this.make(chunk.toString('utf8'), 1, "encode");
+            } else if (this.config[1] === "0") {
+                resultString = this.make(chunk.toString('utf8'), 1, "decode");
+            } else {
+                abort(`ROT-8 cipher config is invalid!`);
+            }
             callback(null, resultString);
         }
         catch (err) {
@@ -13,12 +25,16 @@ class TextShifter extends Transform {
         }
     }
     make(text, charsAmount, type) {
+        
         const multiplier = type === "encode" ? 1 : type === "decode" ? -1 : 1;
 
         const aCharCode = "a".charCodeAt();
         const zCharCode =  "z".charCodeAt();
 
         return text.split("").map(char => {
+            if (char.match(/[А-Яа-я]/)) {
+                abort("Text should contain only latin symbols")
+            }
             if (!char.match(/[A-Za-z]/)) {
                 return char;
             }
@@ -46,4 +62,4 @@ class TextShifter extends Transform {
     }
 };
 
-module.exports = TextShifter;
+module.exports = CaesarCipher;
