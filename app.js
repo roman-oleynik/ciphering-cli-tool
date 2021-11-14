@@ -2,7 +2,7 @@ const { pipeline } = require('stream');
 const fs = require('fs');
 const abort = require('./utils');
 
-const { input, output, action } = require("./parcing-and-validation");
+const { input, output, action } = require("./parsing-and-validation");
 const CaesarCipher = require('./caesar-cipher');
 const ROT8Cipher = require('./rot-8-cipher');
 const AtbashCipher = require('./atbash-cipher');
