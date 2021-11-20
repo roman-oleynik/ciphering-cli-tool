@@ -3,8 +3,8 @@ const abort = require('./utils');
 const config = {
     requiredOptions: [
         {
-            short: "-a",
-            long: "--action"
+            short: "-c",
+            long: "--config"
         }
     ],
     options: [
@@ -101,10 +101,9 @@ const commands = {
 
 const validatedCommands = commands.validate(config);
 
-const action = validatedCommands.find(el => el && (el.command === "-a" || el.command === "--action"));
+const action = validatedCommands.find(el => el && (el.command === config.requiredOptions[0].short || el.command === config.requiredOptions[0].long));
 const input = validatedCommands.find(el => el && (el.command === "-i" || el.command === "--input"));
 const output = validatedCommands.find(el => el && (el.command === "-o" || el.command === "--output"));
-
 
 module.exports = {
     action: action && action.value,
