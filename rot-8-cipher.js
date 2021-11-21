@@ -10,13 +10,9 @@ class ROT8Cipher extends Transform {
     _transform(chunk, encoding, callback) {
         try {
             let resultString = chunk;
-            if (this.config[1] === "1") {
-                resultString = this.make(chunk.toString('utf8'), 8, "encode");
-            } else if (this.config[1] === "0") {
-                resultString = this.make(chunk.toString('utf8'), 8, "decode");
-            } else {
-                abort(`ROT-8 cipher config is invalid!`);
-            }
+
+            resultString = this.make(chunk.toString('utf8'), 8);
+
             callback(null, resultString);
         }
         catch (err) {
@@ -24,7 +20,16 @@ class ROT8Cipher extends Transform {
         }
     }
     make(text, charsAmount, type) {
-        const multiplier = type === "encode" ? 1 : type === "decode" ? -1 : 1;
+        let multiplier = 1;
+
+        if (this.config[1] === "1") {
+            multiplier = 1
+        } else if (this.config[1] === "0") {
+            multiplier = -1
+        } else {
+            abort(`ROT-8 cipher config is invalid!`);
+        }
+        
 
         const aCharCode = "a".charCodeAt();
         const zCharCode =  "z".charCodeAt();

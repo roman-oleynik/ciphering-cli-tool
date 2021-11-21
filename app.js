@@ -2,10 +2,24 @@ const { pipeline } = require('stream');
 const fs = require('fs');
 const abort = require('./utils');
 
-const { input, output, action } = require("./parsing-and-validation");
+const { config, commands } = require("./parsing-and-validation");
 const CaesarCipher = require('./caesar-cipher');
 const ROT8Cipher = require('./rot-8-cipher');
 const AtbashCipher = require('./atbash-cipher');
+
+const validatedCommands = commands.validate(config, commands.list(process.argv));
+let action = validatedCommands.find(el => el && (el.command === config.requiredOptions[0].short || el.command === config.requiredOptions[0].long));
+if (action) {
+    action = action.value;
+}
+let input = validatedCommands.find(el => el && (el.command === "-i" || el.command === "--input"));
+if (input) {
+    input = input.value;
+}
+let output = validatedCommands.find(el => el && (el.command === "-o" || el.command === "--output"));
+if (output) {
+    output = output.value;
+}
 
 const actions = action.split("-").map(el => {
     if (el === "C0" || el === "C1") {
@@ -14,17 +28,9 @@ const actions = action.split("-").map(el => {
         return new ROT8Cipher(el);
     } else if (el === "A") {
         return new AtbashCipher(el);
-    } else {
-        abort(`Config is invalid. Please, check ${el} for correctness`)
     }
 })
 
-if (output && !fs.existsSync(output)) {
-    abort("Output file isn't found in your directory!");
-}
-if (input && !fs.existsSync(input)) {
-    abort("Input file isn't found in your directory!");
-}
 
 pipeline(
     input ? fs.createReadStream(input) : process.stdin,
@@ -38,4 +44,6 @@ pipeline(
     }
 );
 
-
+module.exports = {
+    actions
+}

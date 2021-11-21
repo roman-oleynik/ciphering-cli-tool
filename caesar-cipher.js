@@ -11,13 +11,8 @@ class CaesarCipher extends Transform {
         try {
             let resultString = chunk;
 
-            if (this.config[1] === "1") {
-                resultString = this.make(chunk.toString('utf8'), 1, "encode");
-            } else if (this.config[1] === "0") {
-                resultString = this.make(chunk.toString('utf8'), 1, "decode");
-            } else {
-                abort(`ROT-8 cipher config is invalid!`);
-            }
+            resultString = this.make(chunk.toString('utf8'), 1);
+
             callback(null, resultString);
         }
         catch (err) {
@@ -25,8 +20,16 @@ class CaesarCipher extends Transform {
         }
     }
     make(text, charsAmount, type) {
+        let multiplier = 1;
+
+        if (this.config[1] === "1") {
+            multiplier = 1
+        } else if (this.config[1] === "0") {
+            multiplier = -1
+        } else {
+            abort(`Caesar cipher config is invalid!`);
+        }
         
-        const multiplier = type === "encode" ? 1 : type === "decode" ? -1 : 1;
 
         const aCharCode = "a".charCodeAt();
         const zCharCode =  "z".charCodeAt();

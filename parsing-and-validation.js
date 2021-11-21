@@ -1,4 +1,5 @@
 const abort = require('./utils');
+const fs = require('fs');
 
 const config = {
     requiredOptions: [
@@ -21,34 +22,35 @@ const config = {
 
 
 const commands = {
-    list: process.argv.slice(2).map((el, i) => {
-        const commandObj = {
-            command: "",
-            value: ""
-        }
-        if (el.match(/^(-|--)[a-zA-Z]+/)) {
-            commandObj.command = el;
-            if (process.argv.slice(2)[i+1] && process.argv.slice(2)[i+1].match(/^(?!(-|--))\S+/)) {
-                commandObj.value = process.argv.slice(2)[i+1]
+    list: query => {
+        return query.slice(2).map((el, i) => {
+            const commandObj = {
+                command: "",
+                value: ""
             }
-            return commandObj;
-        } else {
-            return null;
-        }
-    }),
-    validate: config => {
-
+            if (el.match(/^(-|--)[a-zA-Z]+/)) {
+                commandObj.command = el;
+                if (query.slice(2)[i+1] && query.slice(2)[i+1].match(/^(?!(-|--))\S+/)) {
+                    commandObj.value = query.slice(2)[i+1]
+                }
+                return commandObj;
+            } else {
+                return null;
+            }
+        })
+    },
+    validate: (config, list) => {
         config.requiredOptions.forEach(option => {
-            const indexOfRequiredOption = commands.list.findIndex(command => command && (command.command === option.short || command.command === option.long));
-            const valueOfRequiredOption = commands.list.find(command => command && (command.command === option.short || command.command === option.long)).value;
+            const indexOfRequiredOption = list.findIndex(command => command && (command.command === option.short || command.command === option.long));
+            const valueOfRequiredOption = list.find(command => command && (command.command === option.short || command.command === option.long));
 
-            if (indexOfRequiredOption === -1 || !valueOfRequiredOption) {
+            if (indexOfRequiredOption === -1 || !valueOfRequiredOption.value) {
                 abort(`Option '${option.long}' or '${option.short}' is required`);
             }
         });
-        commands.list.forEach(el => {
+        list.forEach(el => {
             if (el) {
-                const commandKeys = commands.list.filter(el => el !== null).map(el => el.command);
+                const commandKeys = list.filter(el => el !== null).map(el => el.command);
 
                 function keyOf (key) {
                     let result = "";
@@ -71,12 +73,12 @@ const commands = {
                     if (!uniqueKeys.includes(keyOf(key))) {
                         uniqueKeys.push(keyOf(key));
                     } else {
-                        abort(`The key ${keyOf(key)} is duplicated`);
+                        abort(`You provided ${keyOf(key)} argument more than once`);
                     }
                 })
             }
         })
-        commands.list.forEach(command => {
+        list.forEach(command => {
             if (command) {
                 let indexOfOptionAmongRequired = -1;
                 let indexOfOptionAmongNotRequired = -1;
@@ -94,19 +96,37 @@ const commands = {
                     abort(`The key ${command.command} isn't supported`);
                 }
             }
-        })
-        return commands.list;
+        });
+        let input = list.find(el => el && (el.command === "-i" || el.command === "--input"));
+        if (input) {
+            input = input.value;
+        }
+        let output = list.find(el => el && (el.command === "-o" || el.command === "--output"));
+        if (output) {
+            output = output.value;
+        }
+        let action = list.find(el => el && (el.command === config.requiredOptions[0].short || el.command === config.requiredOptions[0].long));
+        if (action) {
+            action = action.value;
+            action.split("-").forEach(el => {
+                if (el !== "C0" && el !== "C1" && el !== "R0" && el !== "R1" && el !== "A") {
+                    abort(`Config is invalid. Please, check ${el} for correctness`)
+                }
+            })
+        }
+        if (output && !fs.existsSync(output)) {
+            abort("Output file isn't found in your directory!");
+        }
+        if (input && !fs.existsSync(input)) {
+            abort("Input file isn't found in your directory!");
+        }
+        
+        return list;
     }
 }
 
-const validatedCommands = commands.validate(config);
-
-const action = validatedCommands.find(el => el && (el.command === config.requiredOptions[0].short || el.command === config.requiredOptions[0].long));
-const input = validatedCommands.find(el => el && (el.command === "-i" || el.command === "--input"));
-const output = validatedCommands.find(el => el && (el.command === "-o" || el.command === "--output"));
 
 module.exports = {
-    action: action && action.value,
-    input: input && input.value,
-    output: output && output.value
+    config,
+    commands
 };

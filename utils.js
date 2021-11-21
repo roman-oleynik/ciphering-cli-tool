@@ -1,5 +1,5 @@
 const abort = message => {
-    console.error(`Error: ${message}`);
+    process.stderr.write(`Error: ${message}`);
     process.exit(1);
 };
 
